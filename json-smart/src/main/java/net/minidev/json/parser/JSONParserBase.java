@@ -90,6 +90,7 @@ abstract class JSONParserBase {
 	protected final boolean useHiPrecisionFloat;
 	protected final boolean useIntegerStorage;
 	protected final boolean reject127;
+	protected final boolean unrestictBigDigit;
 
 	public JSONParserBase(int permissiveMode) {
 		this.acceptNaN = (permissiveMode & JSONParser.ACCEPT_NAN) > 0;
@@ -103,6 +104,7 @@ abstract class JSONParserBase {
 		this.checkTaillingData = (permissiveMode & (JSONParser.ACCEPT_TAILLING_DATA | JSONParser.ACCEPT_TAILLING_SPACE)) != (JSONParser.ACCEPT_TAILLING_DATA | JSONParser.ACCEPT_TAILLING_SPACE);
 		this.checkTaillingSpace = (permissiveMode & JSONParser.ACCEPT_TAILLING_SPACE) == 0;
 		this.reject127 = (permissiveMode & JSONParser.REJECT_127_CHAR) > 0;
+		this.unrestictBigDigit = (permissiveMode & JSONParser.BIG_DIGIT_UNRESTRICTED) > 0;
 	}
 
 	public void checkControleChar() throws ParseException {
@@ -146,11 +148,28 @@ abstract class JSONParserBase {
 	protected Number extractFloat() throws ParseException {
 		if (!acceptLeadinZero)
 			checkLeadinZero();
-		if (!useHiPrecisionFloat)
-			return Float.parseFloat(xs);
-		if (xs.length() > 18) // follow JSonIJ parsing method
-			return new BigDecimal(xs);
-		return Double.parseDouble(xs);
+
+		try {
+			if (!useHiPrecisionFloat)
+				return Float.parseFloat(xs);
+
+			// follow JSonIJ parsing method
+			if (xs.length() > 18) {
+				BigDecimal big = new BigDecimal(xs);
+				// use extra CPU to check if the result can be return as double without precision lost
+				if (!unrestictBigDigit) {
+					double asDouble = Double.parseDouble(xs);
+					if (String.valueOf(asDouble).equals(xs))
+						return asDouble;
+				}
+				return big;
+			}
+
+			return Double.parseDouble(xs);
+
+		} catch(NumberFormatException e){
+			throw new ParseException(pos, ERROR_UNEXPECTED_TOKEN, xs);
+		}
 	}
 
 	/**
