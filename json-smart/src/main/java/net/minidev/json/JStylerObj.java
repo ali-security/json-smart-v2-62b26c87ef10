@@ -36,12 +36,14 @@ class JStylerObj {
 	}
 
 	private static class MPTrue implements MustProtect {
+		MPTrue() {}
 		public boolean mustBeProtect(String s) {
 			return true;
 		}
 	}
 
 	private static class MPSimple implements MustProtect {
+		MPSimple() {}
 		/**
 		 * can a String can be store without enclosing quotes. ie: should not
 		 * contain any special json char
@@ -81,6 +83,7 @@ class JStylerObj {
 	}
 
 	private static class MPAgressive implements MustProtect {
+		MPAgressive() {}
 		public boolean mustBeProtect(final String s) {
 			if (s == null)
 				return false;
@@ -210,6 +213,7 @@ class JStylerObj {
 	}
 
 	private static class EscapeLT implements StringProtector {
+		EscapeLT() {}
 		/**
 		 * Escape special chars form String except /
 		 * 
@@ -267,6 +271,7 @@ class JStylerObj {
 	}
 
 	private static class Escape4Web implements StringProtector {
+		Escape4Web() {}
 
 		/**
 		 * Escape special chars form String including /
