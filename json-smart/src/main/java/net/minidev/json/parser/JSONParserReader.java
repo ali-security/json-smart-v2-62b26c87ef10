@@ -30,6 +30,10 @@ import net.minidev.json.writer.JsonReaderI;
  */
 class JSONParserReader extends JSONParserStream {
 	private Reader in;
+	/**
+	 * true once the underlying Reader reported the end of the stream
+	 */
+	private boolean eof;
 
 	// len
 	public JSONParserReader(int permissiveMode) {
@@ -52,6 +56,7 @@ class JSONParserReader extends JSONParserStream {
 		this.base = mapper.base;
 		//
 		this.in = in;
+		this.eof = false;
 		return super.parse(mapper);
 	}
 
@@ -65,7 +70,8 @@ class JSONParserReader extends JSONParserStream {
 
 	protected void read() throws IOException {
 		int i = in.read();
-		c = (i == -1) ? (char) EOI : (char) i;
+		eof = (i == -1);
+		c = eof ? (char) EOI : (char) i;
 		pos++;
 		//
 	}
@@ -75,17 +81,29 @@ class JSONParserReader extends JSONParserStream {
 		int i = in.read();
 		if (i == -1) {
 			c = EOI;
+			eof = true;
 		} else {
 			c = (char) i;
+			eof = false;
 			pos++;
 		}
 	}
 
 	protected void readNoEnd() throws ParseException, IOException {
 		int i = in.read();
-		if (i == -1)
+		if (i == -1) {
+			eof = true;
 			throw new ParseException(pos - 1, ERROR_UNEXPECTED_EOF, "EOF");
+		}
 		c = (char) i;
+		eof = false;
 		//
+	}
+
+	/**
+	 * In stream parsing, the input is fully consumed once the Reader returned -1
+	 */
+	protected boolean isEndOfInput() {
+		return eof;
 	}
 }

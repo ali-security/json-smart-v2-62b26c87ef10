@@ -185,7 +185,8 @@ abstract class JSONParserBase {
 			if (checkTaillingData) {
 				if (!checkTaillingSpace)
 					skipSpace();
-				if (c != EOI)
+				// a literal 0x1A char in the input is not the end of input
+				if (c != EOI || !isEndOfInput())
 					throw new ParseException(pos - 1, ERROR_UNEXPECTED_TOKEN, c);
 			}
 		} catch (IOException e) {
@@ -260,6 +261,15 @@ abstract class JSONParserBase {
 	}
 
 	abstract protected void read() throws IOException;
+
+	/**
+	 * EOI (0x1A) is used as end of input marker, but it can also be a literal
+	 * char of the input data.
+	 *
+	 * @return true if all the input data had been consumed, false if the
+	 *         current EOI char is a literal 0x1A char read from the input
+	 */
+	abstract protected boolean isEndOfInput();
 
 	protected <T> T readArray(JsonReaderI<T> mapper) throws ParseException, IOException {
 		Object current = mapper.createArray();
